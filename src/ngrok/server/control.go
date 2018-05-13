@@ -10,6 +10,7 @@ import (
 	"runtime/debug"
 	"strings"
 	"time"
+	"io/ioutil"
 )
 
 const (
@@ -100,6 +101,22 @@ func NewControl(ctlConn conn.Conn, authMsg *msg.Auth) {
 		failAuth(fmt.Errorf("Incompatible versions. Server %s, client %s. Download a new version at http://ngrok.com", version.MajorMinor(), authMsg.Version))
 		return
 	}
+
+	//Control token that is placed in /etc/ngrok/authtoken.conf
+	b, err := ioutil.ReadFile("/etc/ngrok/authtoken.conf") // just pass the file name
+    if err != nil {
+		failAuth(fmt.Errorf("Invalid authtokennn %s", err))
+        
+    }
+
+	authtoken := string(b) // convert content to a 'string'
+	authtoken = strings.TrimSpace(authtoken)
+	if authMsg.User != authtoken {
+		failAuth(fmt.Errorf("Invalid authtokene %s",  authMsg.User))
+		return
+	}
+
+
 
 	// register the control
 	if replaced := controlRegistry.Add(c.id, c); replaced != nil {
